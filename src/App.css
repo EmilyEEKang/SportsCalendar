@@ -32,4 +32,14 @@
   margin: 0 auto; /* Center the div horizontally */
   white-space: pre-wrap;
   text-align: left;
+  font: Arial;
+}
+
+.file-input {
+  margin: 0 auto;
+}
+
+.files-list {
+  list-style-type: none;
+  margin-right: 30px;
 }

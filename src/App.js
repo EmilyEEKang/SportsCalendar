@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
-import DateBox from './DatePickers';
-import LinkBox from './LinkBox';
-import CreateCalendar from './CreateCalendar';
+import DateBox from './components/DatePickers';
+import CreateCalendar from './components/CreateCalendar';
 import './App.css';
 
 function App() {
+  //State for date range
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  // State for uploaded ICS files
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  // State for alerts
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [severity, setSeverity] = useState('');
-  const [links, setLinks] = useState('');
+  // State for calendar output
   const [divText, setDivText] = useState('');
+  // State for dictionary
   const [key, setKey] = useState('');
   const [value, setValue] = useState('');
   const [dictionaryString, setDictionaryString] = useState('');
@@ -32,6 +36,7 @@ function App() {
     "tennis": '🎾',
     "ten": '🎾',
     "golf": '🏌️',
+    "bowl": '🎳',
     "bowling": '🎳',
     "dive": '🌊',
     "diving": '🌊',
@@ -52,8 +57,6 @@ function App() {
     "archery": '🏹',
     "bike": '🚲',
     "biking": '🚲',
-    "bowling": '🎳',
-    "bowl": '🎳',
     "boxing": '🥊',
     "cheer": '📣',
     "dance": '💃',
@@ -77,7 +80,7 @@ function App() {
     const sortedDictionary = Object.entries(emojiDictionary).sort(([keyA], [keyB]) =>
       keyA.localeCompare(keyB)
     );
-    let dictString = '';
+    let dictString = '| ';
     for (const [key, value] of sortedDictionary) {
       dictString += `${key}: ${value}  |  `;
     }
@@ -121,14 +124,13 @@ function App() {
       setAlertOpen(true);
       return;
     }
-    if (!links) {
-      setAlertMessage('Please enter a list of links'); // Error if links are not entered
+    if (uploadedFiles.length === 0) {
+      setAlertMessage('Please select a iCal (.ics) or RSS (.rss) Calendar file'); // Error if files are not entered
       setSeverity('error');
       setAlertOpen(true);
       return;
     }
-    setLinks(links); // Gets links from text box
-    setDivText(<CreateCalendar startDate={startDate} endDate={endDate} links={links} emojiDictionary={emojiDictionary} />); // Creates calendar
+    setDivText(<CreateCalendar startDate={startDate} endDate={endDate} files={uploadedFiles} emojiDictionary={emojiDictionary} />); // Creates calendar
   };
 
   const handleAdd = () => {
@@ -164,16 +166,61 @@ function App() {
     setEmojiDictionary(prevDict => ({ ...prevDict}));
   };
 
+  const handleRemoveFile = (fileName) => {
+    setUploadedFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+  };
+
+  const handleFileChange = (event) => {
+    const files = event.target.files;
+    const newUploadedFiles = [];
+    let duplicate = false;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      for (let j = 0; j < uploadedFiles.length; j++)
+      {
+        if (file.name === uploadedFiles[j].name)
+        {
+          console.log("File already uploaded")
+          duplicate = true;
+          break;
+        }
+      }
+
+      if (duplicate)
+      {
+        duplicate = false;
+        continue;
+      }
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const content = e.target.result;
+        newUploadedFiles.push({ name: file.name, content });
+
+        // Update the state after reading all files
+        if (newUploadedFiles.length === files.length) {
+          setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+        }
+      };
+      if (file)
+      {
+        reader.readAsText(file);
+      }
+    }
+  };
+
   return (
     <div className="App">
       <h1>Sports Calendar</h1>
       <div>
-        Select calendar start: 
+        <b>Select calendar start:</b>
         <DateBox selectedDate={startDate} onDateChange={handleStartDateChange} />
       </div>
       <br />
       <div>
-        Select calendar end: 
+        <b>Select calendar end:</b>
         <DateBox selectedDate={endDate} onDateChange={handleEndDateChange} minDate={startDate} />
       </div>
       <Snackbar className="alert"open={alertOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
@@ -181,8 +228,27 @@ function App() {
           {alertMessage}
         </Alert>
       </Snackbar>
-      <br /> 
-      <LinkBox value={links} onChange={setLinks} />
+      <br/>
+      <div>
+        <b>Upload ICS or RSS File:</b>
+        <br/>
+        <input type="file" className="file-input" accept=".ics,.rss" onChange={handleFileChange} multiple/>
+        <br/>
+        <br/>
+        <b>Uploaded files:</b>
+        <ul className='files-list'>
+          {uploadedFiles.length === 0 ? (
+            <li>None</li>
+          ) : (
+            uploadedFiles.map((file, index) => (
+              <li key={index}>
+                <button className="remove-button" onClick={() => handleRemoveFile(file.name)}>Remove</button>
+                {" "}{file.name}
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
       <br />
       <b>Emoji Association List:</b>
       <br />
