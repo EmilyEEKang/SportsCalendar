@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Calendar, ChevronDown, ChevronUp, Clock, SettingsIcon, Upload } from 'lucide-react';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
-import DateBox from './components/DatePickers';
 import CreateCalendar from './components/CreateCalendar';
+import DateBox from './components/DatePickers';
 import './App.css';
+import Tiptap from './components/Tiptap';
 
 function App() {
   //State for date range
@@ -15,7 +17,10 @@ function App() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [severity, setSeverity] = useState('');
+  // State for button
+  const [isExpanded, setIsExpanded] = useState(false);
   // State for calendar output
+  const tiptapRef = useRef(null);
   const [divText, setDivText] = useState('');
   // State for dictionary
   const [key, setKey] = useState('');
@@ -131,6 +136,12 @@ function App() {
       return;
     }
     setDivText(<CreateCalendar startDate={startDate} endDate={endDate} files={uploadedFiles} emojiDictionary={emojiDictionary} />); // Creates calendar
+
+    if (tiptapRef.current) {
+      console.log(divText)
+      tiptapRef.current.updateContent("hello");
+      //tiptapRef.current.updateContent(divText);
+    }
   };
 
   const handleAdd = () => {
@@ -211,85 +222,173 @@ function App() {
     }
   };
 
-  return (
-    <div className="App">
-      <h1>Sports Calendar</h1>
-      <div>
-        <b>Select calendar start:</b>
-        <DateBox selectedDate={startDate} onDateChange={handleStartDateChange} />
-      </div>
-      <br />
-      <div>
-        <b>Select calendar end:</b>
-        <DateBox selectedDate={endDate} onDateChange={handleEndDateChange} minDate={startDate} />
-      </div>
-      <Snackbar className="alert"open={alertOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
-      <br/>
-      <div>
-        <b>Upload ICS or RSS File:</b>
-        <br/>
-        <input type="file" className="file-input" accept=".ics,.rss" onChange={handleFileChange} multiple/>
-        <br/>
-        <br/>
-        <b>Uploaded files:</b>
-        <ul className='files-list'>
-          {uploadedFiles.length === 0 ? (
-            <li>None</li>
-          ) : (
-            uploadedFiles.map((file, index) => (
-              <li key={index}>
-                <button className="remove-button" onClick={() => handleRemoveFile(file.name)}>Remove</button>
-                {" "}{file.name}
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-      <br />
-      <b>Emoji Association List:</b>
-      <br />
-      <div className="dictionary-container">
-        {dictionaryString}
-      </div>
-      <br />
-      <div>
-        <input
-          type="text"
-          display="inline"
-          placeholder="Sport name"
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-        />
-        <input
-          type="text"
-          display="inline"
-          placeholder="Emoji"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-        />
-        <button
-          display="inline"
-          onClick={handleAdd}>
-            Add to list
-        </button>
-        <button
-          display="inline"
-          onClick={handleRemove}>
-            Remove from list
-        </button>
-      </div>
+  const ChangeButton = () => {
+    if (isExpanded) {
+      setIsExpanded(false);
+    }
+    else {
+      setIsExpanded(true);
+    }
+  }
 
-      <br />
-      <button onClick={handleButtonClick}>Generate Calendar!</button>
-      <br />
+  const copyToClipboard = (input) => {
+    if (input === '') {
+      setAlertMessage('There is no calendar to copy');
+      setSeverity('info');
+      setAlertOpen(true);
+    } else {
+      const clipboard = new window.ClipboardItem({ 'text/html': new Blob([input], { type: 'text/plain' }) });
+      navigator.clipboard.write([clipboard]);
+      setAlertMessage('Calendar copied to clipboard');
+      setSeverity('success');
+      setAlertOpen(true);
+      // const turndownService = new TurndownService();
+      // const markdown = turndownService.turndown(input);
+      // navigator.clipboard.writeText(markdown);
+    }
+  }
+
+  
+
+  return (
+  <div className="App">
+    <header className="app-header">
+      <div className="app-header-container">
+        <div className="app-flex">
+          <Calendar size={32}/>
+          <h1 className="title">Sports Calendar</h1>
+        </div>
+      </div>
+    </header>
+
+    <main className="app-main">
+    <Snackbar open={alertOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
+        {alertMessage}
+      </Alert>
+    </Snackbar>
+    <div className="content">
+      <div className="SettingsComponent">
+        <div className="settings">
+          <SettingsIcon size={20} color='rgb(37 99 235)'/>
+          <p className="settings-title">Settings</p>
+          <button id="toggleButton" className="chevron-button" onClick={ChangeButton}>
+            <span id="chevron">
+              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </span>
+          </button>
+        </div>
+        <br/>
+        {isExpanded ? 
+        <div id="emojiDict" className="emojiDict">
+          <p className="emojiList"><b>Emoji Associations</b></p>
+          <br />
+          {dictionaryString}
+          <div className='dictionary-container'>
+            <input
+              type="text"
+              className = "input-box"
+              display="inline"
+              placeholder="Sport name"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+            />
+            <input
+              type="text"
+              className = "input-box"
+              display="inline"
+              placeholder="Emoji"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+            <button
+              display="inline"
+              className="emoji-buttons"
+              onClick={handleAdd}>
+                Add to list
+            </button>
+            <button
+              display="inline"
+              className="emoji-buttons"
+              onClick={handleRemove}>
+                Remove from list
+            </button>
+          </div>
+        </div>
+        : <div /> }
+        </div>
+        <div className="separator"/>
+        <div className="DateComponent">
+          <div className="date-title">
+            <Clock size={20} color='rgb(37 99 235)'/>
+            <p className="date-range">Date Range</p>
+          </div>
+          <div className="empty">
+            <div className="date-pickers">
+              <div> 
+                <label className="date-label">Start Date</label>
+                <div className="date-box">
+                  <DateBox id="startDate" selectedDate={startDate} onDateChange={handleStartDateChange} />
+                </div>
+              </div>
+              <div>
+              <label className="date-label">End Date</label>
+              <div className="date-box">
+                <DateBox id="endDate" selectedDate={endDate} onDateChange={handleEndDateChange} />
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="separator"/>
+        <div className="UploadComponent">
+          <div className="upload-title">
+            <Upload size={20} color='rgb(37 99 235)'/>
+            <p className="file-upload-title">Upload ICS or RSS File</p>
+          </div>
+          <div>
+            <label htmlFor="files" className="file-label">
+              <Upload className="icon" size={18}/>
+              Select ICS or RSS file(s)
+            </label>
+            <br/>
+            <input id="files" type="file" className="file-input" accept=".ics,.rss" onChange={handleFileChange} multiple/>
+          </div>
+          <div>
+            {uploadedFiles.length === 0 ? (
+              <div className="empty"/>
+            ) : (
+              <div className="uploaded-files">
+                <p className="UploadedFilesTitle">Uploaded files:</p>
+                <ul>
+                {
+                  uploadedFiles.map((file, index) => (
+                    <li key={index}>
+                      {file.name}
+                      <button className="remove-button" onClick={() => handleRemoveFile(file.name)}>Remove</button>
+                    </li>
+                  ))
+                }
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="separator"/>
+        <div className="CalendarComponent">
+          <button className='generate-button' onClick={handleButtonClick}>Generate Calendar!</button>
+        </div>
+        </div>
+    <div className="content">
       <div className="calendar">
+        {divText ? (<Tiptap ref={tiptapRef}></Tiptap>) : (
+          <div/>
+        ) }
         {divText}
       </div>
     </div>
+    </main>
+  </div>
   );
 }
 

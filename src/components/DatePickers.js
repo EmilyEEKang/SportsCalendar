@@ -1,18 +1,26 @@
 import React from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { LocalizationProvider, DatePicker, PickersActionBar  } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import TextField from '@mui/material/TextField';
 
 const DateBox = ({ selectedDate, onDateChange }) => {
   return (
-    <div>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
       <DatePicker
-        selected={selectedDate}
-        onChange={(date) => onDateChange(date)}
-        dateFormat={["MMMM d, yyyy", "MM/dd/yyyy"]}
-        placeholderText="Select a date"
-        isClearable
+        label="Select Date"
+        value={selectedDate}
+        onChange={(newValue) => onDateChange(newValue)}
+        TextField={(params) => <TextField {...params} />}
+        slots={{
+          ActionBar: PickersActionBar,
+        }}
+        slotProps={{
+          actionBar: {
+            actions: ['today','clear']
+          }
+        }}
       />
-    </div>
+    </LocalizationProvider>
   );
 };
 

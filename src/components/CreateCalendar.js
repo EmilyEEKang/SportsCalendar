@@ -1,5 +1,6 @@
 import React from 'react';
 import ICAL from "ical.js";
+import Moment from 'moment';
 
 const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
   let days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -33,15 +34,19 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
     return links;
   };
 
+  function getTime(description) {
+    
+  }
+
   function parseTitle(event) {
     //need to get college information like state and parse for time to only get home games?
   }
 
   function compareDate(day, eventStart, eventEnd)
   {
-    return (eventStart.getFullYear() >= day.getFullYear() && day.getFullYear() <= eventEnd.getFullYear() &&
-    eventStart.getMonth() >= day.getMonth() && day.getMonth() <= eventEnd.getMonth() &&
-    eventStart.getDate() >= day.getDate() && day.getDate() <= eventEnd.getDate());
+    return (eventStart.getFullYear() === day.getFullYear() &&
+    eventStart.getMonth() === day.getMonth() &&
+    eventStart.getDate() === day.getDate());
   }
 
   function icsParse(day, file)
@@ -64,15 +69,12 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
 
       if (compareDate(day, eventStart, eventEnd))
       {
-        console.log('Event Summary:', event.summary);
         title = event.summary;
         location = event.location;
         emoji = getEmoji(title);
         // parse description for links
-        eventStr.push(`${emoji} ${title} @ ${location} @ ${time} ${links}\n`);
-      }
-      else {
-        console.log("no match");
+        let eventDescription = `${emoji} ${title} @ ${location} @ ${time} ${links}\n`;
+        eventStr.push(eventDescription);
       }
     });
     return eventStr;
@@ -80,7 +82,7 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
 
   function rssParse(day, file)
   {
-    let eventStr = [];
+    let events = [];
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(file.content, "text/xml");
     const items = xmlDoc.getElementsByTagName("item");
@@ -94,10 +96,15 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
 
       if (compareDate(day, startDate, endDate)) {
         const emoji = getEmoji(title);
-        eventStr.push(`${emoji} ${title} @ ${location}\n`);
+        let eventDescription = `${emoji} ${title} @ ${location}\n`;
+        console.log(eventDescription);
+        events.push(eventDescription);
       }
     }
-    return eventStr;
+    if (events.length > 0) {
+      events[events.length - 1] = events[events.length - 1].replace(/\n$/, ""); // Remove the last newline character
+    }
+    return events;
   }
 
   function generateCal(day, files) {
@@ -105,28 +112,45 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
     let events = [];
     for (let i = 0; i < files.length; i++)
     {
+      console.log(i, files[i].name, files.length);
       let file = files[i];
       if (file.name.endsWith('.ics')) {
+        console.log("parsing ics");
         events = icsParse(day, file);
-      } else if (file.name.endsWith('.rss')) {
+      } 
+      if (file.name.endsWith('.rss')) {
+        console.log("parsing rss");
         events = rssParse(day, file);
       }
     }
     line.push(events);
     if (events.length === 0)
     {
-      line.push(<i>"No Events Scheduled"</i>);
+      line.push(<i>No Events Scheduled</i>);
     }
     return line;
   }
 
   function generateCalendar(files) {
-    let currentDate = new Date(startDate);
-    const end = new Date(endDate);
-    const events = [];
+    const start = new Moment(startDate);
+    let currentDate = new Date(start);
+    const endDay = new Moment(endDate);
+    const end = new Moment(endDay.add(1, 'days'));
+    let dates = [];
+    let events = [];
     let i = 0;
 
-    while (currentDate <= end) {
+    // while (!start.isSame(end)) {
+    //   console.log("hello",start, end, currentDate)
+    //   console.log("start=end", start.isSame(end));
+    //   dates.push(start.format('YYYY-MM-DD'));
+    //   start.add(1, 'days');
+    // }
+
+    // for (let i = 0; i < dates.length; i++) {
+    //   console.log(dates[i]);
+    // }
+    
       events.push(
         <div key={++i}>
           <b><u>{days[currentDate.getDay()]}, {months[currentDate.getMonth()]} {currentDate.getDate().toString()}</u></b>
@@ -136,8 +160,7 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
           <br />
         </div>
       );
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    
     return events;
 
   }
