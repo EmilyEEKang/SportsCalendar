@@ -1,16 +1,12 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
-import { EditorProvider, useCurrentEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import TextStyle from '@tiptap/extension-text-style';
 
-// define your extension array
-const extensions = [StarterKit.configure({
-})]
-
-const MenuBar = () => {
-  const { editor } = useCurrentEditor()
-
+const MenuBar = ({ editor }) => {
   if (!editor) {
-    return null
+    return null;
   }
 
   return (
@@ -18,42 +14,27 @@ const MenuBar = () => {
       <div className="button-group">
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
-          disabled={
-            !editor.can()
-              .chain()
-              .focus()
-              .toggleBold()
-              .run()
-          }
           className={editor.isActive('bold') ? 'is-active' : ''}
         >
           Bold
         </button>
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          disabled={
-            !editor.can()
-              .chain()
-              .focus()
-              .toggleItalic()
-              .run()
-          }
           className={editor.isActive('italic') ? 'is-active' : ''}
         >
           Italic
         </button>
         <button
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          disabled={
-            !editor.can()
-              .chain()
-              .focus()
-              .toggleStrike()
-              .run()
-          }
           className={editor.isActive('strike') ? 'is-active' : ''}
         >
           Strike
+        </button>
+        <button
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          className={editor.isActive('underline') ? 'is-active' : ''}
+        >
+          Underline
         </button>
         
         <button onClick={() => editor.chain().focus().unsetAllMarks().run()}>
@@ -112,54 +93,64 @@ const MenuBar = () => {
         <button onClick={() => editor.chain().focus().setHardBreak().run()}>
           Hard break
         </button>
-        <button
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={
-            !editor.can()
-              .chain()
-              .focus()
-              .undo()
-              .run()
-          }
-        >
+        <button onClick={() => editor.chain().focus().undo().run()}>
           Undo
         </button>
-        <button
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={
-            !editor.can()
-              .chain()
-              .focus()
-              .redo()
-              .run()
-          }
-        >
+        <button onClick={() => editor.chain().focus().redo().run()}>
           Redo
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const Tiptap = forwardRef((props, ref) => {
-  let content = '';
+  const [htmlContent, setHtmlContent] = useState('');
+  
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextStyle,
+    ],
+    content: htmlContent,
+    editorProps: {
+      attributes: {
+        class: 'editor-container',
+      },
+    },
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
+  });
+
+  // Update editor content when htmlContent changes
+  useEffect(() => {
+    if (editor && htmlContent) {
+      // Set content with parseHTML for proper handling
+      editor.commands.setContent(htmlContent, true);
+    }
+  }, [editor, htmlContent]);
 
   const updateContent = (newContent) => {
-    // Logic to update the content in Tiptap
     if (newContent) {
-      console.log('Updating content:', newContent);
-      content = newContent;
+      console.log('Setting new content to Tiptap:', newContent);
+      setHtmlContent(newContent);
     }
   };
 
-  // Expose the updateContent method to the parent component
+  // Expose methods to parent
   useImperativeHandle(ref, () => ({
     updateContent,
+    getHTML: () => editor?.getHTML() || '',
   }));
 
   return (
-    <EditorProvider slotBefore={<MenuBar />} extensions={extensions} content={content} editorContainerProps={{ className: 'editor-container' }}/>
-  )
+    <div className="editor">
+      <MenuBar editor={editor} />
+      <EditorContent editor={editor} />
+    </div>
+  );
 });
 
-export default Tiptap
+export default Tiptap;

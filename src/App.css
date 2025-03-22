@@ -268,3 +268,49 @@ button {
 }
 
 /* Basic editor styles */
+
+.editor-wrapper {
+  margin-top: 40px;
+  border-top: 2px solid #e5e7eb;
+  padding-top: 20px;
+}
+
+.editor-wrapper h3 {
+  color: rgb(37, 99, 235);
+  margin-bottom: 15px;
+}
+
+.editor {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.editor-container {
+  background-color: white;
+  padding: 16px;
+  min-height: 200px;
+  text-align: left;
+  white-space: pre-wrap;
+  font-family: inherit;
+}
+
+/* Make the editor match the original calendar styling */
+.editor-container u,
+.editor-container span[style*="text-decoration: underline"] {
+  text-decoration: underline;
+}
+
+.editor-container b {
+  font-weight: bold;
+}
+
+.editor-container i {
+  font-style: italic;
+}
+
+.editor-container br {
+  display: block;
+  content: "";
+  margin-top: 0.5em;
+}
