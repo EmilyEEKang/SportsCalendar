@@ -1,16 +1,174 @@
 .App {
   text-align: center;
+  min-height: 100vh;
+  background-color: rgb(243 244 246);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+.app-header {
+  background-image: linear-gradient(to right, #2563eb, #4338ca);
   color: white;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.app-header-container {
+  margin: auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+      max-width: 640px;
+  }
+}
+
+.app-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.875rem (30px);
+  line-height: calc(2.25 / 1.875);
+  font-weight: bold;
+  padding-left: 10px;
+}
+
+.app-main {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.content {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.emojiList {
+  margin-top: -2rem;
+  margin-bottom: -1rem;
+}
+
+.emoji-buttons {
+  color: rgb(55 65 81);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-color: rgb(209 213 219);
+  border: 1px solid rgb(209 213 219);
+  border-width: 1px;
+  border-radius: 0.375rem;
+  background-color: transparent;
+  background-image: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+.date-title {
+  color: rgb(31 41 55);
+  align-items: center;
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.date-pickers {
+  margin-left: 1rem;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.date-range {
+  padding-left: 10px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.date-label {
+  display: flex;
+  color: rgb(55 65 81);
+  font-weight: 500;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.settings {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.settings-title {
+  display: flex;
+  padding-left: 10px;
+  padding-right: 10px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.chevron-button {
+  border: none;
+  background-color: transparent;
+}
+
+.input-box {
+  padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-color: rgb(209 213 219);
+    border-width: 1px;
+    border-radius: 0.375rem;
+}
+
+.remove-button {
+  margin-left: 10px;
+  color: rgb(55 65 81);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-color: rgb(209 213 219);
+  border: 1px solid rgb(209 213 219);
+  border-width: 1px;
+  border-radius: 0.375rem;
+  background-image: none;
+}
+
+.empty {
+  margin-bottom: 3rem;
+}
+
+.uploaded-files {
+  color: rgb(29 78 216);
+  background-color: rgb(239 246 255);
+  border-radius: 0.375rem;
+  border-width: 2px;
+  border-color: rgb(191 219 254);
+  padding: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.separator {
+  height: 1px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-color: rgb(229 231 235);
+  color: rgb(229 231 235);
+  border-top-width: 1px;
+  background-color: rgb(229 231 235);
 }
 
 .App-link {
@@ -21,25 +179,153 @@
   width: 60%;
   margin: 0 auto; /* Center the div horizontally */
 }
+
 .dictionary-container {
   width: 50%;
   margin: 0 auto; /* Center the div horizontally */
   white-space: pre-wrap;
+  padding: 1rem;
 }
 
-.calendar {
-  width: 70%;
-  margin: 0 auto; /* Center the div horizontally */
-  white-space: pre-wrap;
-  text-align: left;
-  font: Arial;
+.file-upload-title {
+  padding-left: 10px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.upload-title {
+  color: rgb(31 41 55);
+  align-items: center;
+  display: flex;
+  margin-bottom: 1rem;
 }
 
 .file-input {
-  margin: 0 auto;
+  display: none;
+}
+
+.file-label {
+  color: #eff0eb;
+  font-weight: 600;
+  width: 18%;
+  font-size: large;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1rem; 
+  padding-right: 1rem;
+  background-color: rgb(37 99 235);
+  border-radius: 0.375rem;
+  cursor: pointer;
 }
 
 .files-list {
   list-style-type: none;
   margin-right: 30px;
+}
+
+.calendar {
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.CalendarComponent {
+  padding-top: 1rem;
+}
+
+.generate-button {
+  color: #eff0eb;
+  font-weight: 600;
+  text-align: center;
+  font-size: large;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1rem; 
+  padding-right: 1rem;
+  background-color: rgb(37 99 235);
+  border-radius: 0.375rem;
+  align-items: center;
+  cursor: pointer;
+}
+
+.icon {
+  padding-right: 0.25rem;
+}
+
+
+/* Tiptap Settnigs */
+.button-group > button {
+  color: rgb(55 65 81);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-color: rgb(209 213 219);
+  border: 1px solid rgb(209 213 219);
+  border-width: 1px;
+  border-radius: 0.375rem;
+  background-color: transparent;
+  background-image: none;
+}
+
+.button-group > button.is-active {
+  color: rgb(55 65 81);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-color: rgb(209 213 219);
+  border: 1px solid rgb(209 213 219);
+  border-width: 1px;
+  border-radius: 0.375rem;
+  background-color: rgb(84, 133, 240);
+}
+/* Basic editor styles */
+
+.editor-wrapper {
+  margin-top: 40px;
+  padding-top: 20px;
+}
+
+.editor-wrapper h3 {
+  color: rgb(37, 99, 235);
+  margin-bottom: 15px;
+}
+
+.editor {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.editor-container {
+  background-color: white;
+  padding: 16px;
+  min-height: 200px;
+  text-align: left;
+  white-space: pre-wrap;
+  font-family: inherit;
+}
+
+/* Make the editor match the original calendar styling */
+.editor-container u,
+.editor-container span[style*="text-decoration: underline"] {
+  text-decoration: underline;
+}
+
+.editor-container b {
+  font-weight: bold;
+}
+
+.editor-container i {
+  font-style: italic;
+}
+
+.editor-container br {
+  display: block;
+  content: "";
+  margin-top: 0.5em;
+}
+
+a {
+  color: rgb(37, 99, 235);
 }

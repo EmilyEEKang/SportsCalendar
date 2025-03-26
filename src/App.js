@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Calendar, ChevronDown, ChevronUp, Clock, SettingsIcon, Upload, Copy } from 'lucide-react';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
-import DateBox from './components/DatePickers';
 import CreateCalendar from './components/CreateCalendar';
+import DateBox from './components/DatePickers';
 import './App.css';
+import Tiptap from './components/Tiptap';
+import ReactDOMServer from 'react-dom/server';
 
 function App() {
   //State for date range
@@ -15,7 +18,10 @@ function App() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [severity, setSeverity] = useState('');
+  // State for button
+  const [isExpanded, setIsExpanded] = useState(false);
   // State for calendar output
+  const tiptapRef = useRef(null);
   const [divText, setDivText] = useState('');
   // State for dictionary
   const [key, setKey] = useState('');
@@ -75,6 +81,8 @@ function App() {
     "snowboarding": '🏂',
     "triathlon": '🌊🚲🏃‍♂️'
   });
+  // Add state for copy success notification
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     const sortedDictionary = Object.entries(emojiDictionary).sort(([keyA], [keyB]) =>
@@ -130,7 +138,52 @@ function App() {
       setAlertOpen(true);
       return;
     }
-    setDivText(<CreateCalendar startDate={startDate} endDate={endDate} files={uploadedFiles} emojiDictionary={emojiDictionary} />); // Creates calendar
+    
+    // Create calendar content
+    const calendarContent = <CreateCalendar startDate={startDate} endDate={endDate} files={uploadedFiles} emojiDictionary={emojiDictionary} />;
+    setDivText(calendarContent); // Creates calendar and displays it
+    
+    // Generate HTML string from the React component
+    try {
+      const htmlString = ReactDOMServer.renderToString(calendarContent);
+      console.log("Generated HTML content length:", htmlString.length);
+      
+      // Process HTML to ensure only day headers are formatted
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlString;
+      
+      // Make sure there's good spacing between days
+      const dayContainers = tempDiv.querySelectorAll('.calendar-day');
+      dayContainers.forEach(container => {
+        container.style.marginBottom = '20px';
+      });
+      
+      // Make sure day headers and content are properly formatted
+      const dayContentParagraphs = tempDiv.querySelectorAll('.day-content');
+      dayContentParagraphs.forEach(paragraph => {
+        // Ensure only headers are bold and underlined
+        const content = paragraph.innerHTML;
+        // Make sure <br> tags and header formatting is preserved
+        const processedContent = content.replace(/<b><u>(.*?)<\/u><\/b><br\s*\/>/, function(match, headerText) {
+          return `<b><u>${headerText}</u></b><br />`;
+        });
+        paragraph.innerHTML = processedContent;
+      });
+      
+      const processedHtml = tempDiv.innerHTML;
+      
+      // Wait a moment to ensure the component has mounted
+      setTimeout(() => {
+        if (tiptapRef.current) {
+          tiptapRef.current.updateContent(processedHtml);
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Error rendering HTML:", error);
+      setAlertMessage('Error generating calendar for editor');
+      setSeverity('error');
+      setAlertOpen(true);
+    }
   };
 
   const handleAdd = () => {
@@ -211,85 +264,204 @@ function App() {
     }
   };
 
-  return (
-    <div className="App">
-      <h1>Sports Calendar</h1>
-      <div>
-        <b>Select calendar start:</b>
-        <DateBox selectedDate={startDate} onDateChange={handleStartDateChange} />
-      </div>
-      <br />
-      <div>
-        <b>Select calendar end:</b>
-        <DateBox selectedDate={endDate} onDateChange={handleEndDateChange} minDate={startDate} />
-      </div>
-      <Snackbar className="alert"open={alertOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
-      <br/>
-      <div>
-        <b>Upload ICS or RSS File:</b>
-        <br/>
-        <input type="file" className="file-input" accept=".ics,.rss" onChange={handleFileChange} multiple/>
-        <br/>
-        <br/>
-        <b>Uploaded files:</b>
-        <ul className='files-list'>
-          {uploadedFiles.length === 0 ? (
-            <li>None</li>
-          ) : (
-            uploadedFiles.map((file, index) => (
-              <li key={index}>
-                <button className="remove-button" onClick={() => handleRemoveFile(file.name)}>Remove</button>
-                {" "}{file.name}
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-      <br />
-      <b>Emoji Association List:</b>
-      <br />
-      <div className="dictionary-container">
-        {dictionaryString}
-      </div>
-      <br />
-      <div>
-        <input
-          type="text"
-          display="inline"
-          placeholder="Sport name"
-          value={key}
-          onChange={(e) => setKey(e.target.value)}
-        />
-        <input
-          type="text"
-          display="inline"
-          placeholder="Emoji"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-        />
-        <button
-          display="inline"
-          onClick={handleAdd}>
-            Add to list
-        </button>
-        <button
-          display="inline"
-          onClick={handleRemove}>
-            Remove from list
-        </button>
-      </div>
+  const ChangeButton = () => {
+    if (isExpanded) {
+      setIsExpanded(false);
+    }
+    else {
+      setIsExpanded(true);
+    }
+  }
 
-      <br />
-      <button onClick={handleButtonClick}>Generate Calendar!</button>
-      <br />
+const handleCopyToClipboard = () => {
+    if (tiptapRef.current) {
+      const htmlContent = tiptapRef.current.getHTML();
+      
+      try {
+        // Process HTML to preserve only day headers formatting
+        const processedHtml = htmlContent;
+        
+        // Use ClipboardItem to preserve minimal formatting
+        const clipboardItem = new ClipboardItem({
+          'text/html': new Blob([processedHtml], { type: 'text/html' }),
+          'text/plain': new Blob([processedHtml], { type: 'text/plain' }) // Fallback plain text
+        });
+        
+        navigator.clipboard.write([clipboardItem])
+          .then(() => {
+            setCopySuccess(true);
+            setAlertMessage('Calendar copied to clipboard!');
+            setSeverity('success');
+            setAlertOpen(true);
+            
+            // Reset success message after 3 seconds
+            setTimeout(() => {
+              setCopySuccess(false);
+            }, 3000);
+          })
+          .catch(err => {
+            console.error('Failed to copy formatted text: ', err);
+            // Fallback to plain text copy
+          });
+      } catch (err) {
+        console.error('ClipboardItem not supported: ', err);
+      }
+    }
+  };
+
+  return (
+  <div className="App">
+    <header className="app-header">
+      <div className="app-header-container">
+        <div className="app-flex">
+          <Calendar size={32}/>
+          <h1 className="title">Sports Calendar</h1>
+        </div>
+      </div>
+    </header>
+
+    <main className="app-main">
+    <Snackbar open={alertOpen} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
+        {alertMessage}
+      </Alert>
+    </Snackbar>
+    <div className="content">
+      <div className="SettingsComponent">
+        <div className="settings">
+          <SettingsIcon size={20} color='rgb(37 99 235)'/>
+          <p className="settings-title">Settings</p>
+          <button id="toggleButton" className="chevron-button" onClick={ChangeButton}>
+            <span id="chevron">
+              {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </span>
+          </button>
+        </div>
+        <br/>
+        {isExpanded ? 
+        <div id="emojiDict" className="emojiDict">
+          <p className="emojiList"><b>Emoji Associations</b></p>
+          <br />
+          {dictionaryString}
+          <div className='dictionary-container'>
+            <input
+              type="text"
+              className = "input-box"
+              display="inline"
+              placeholder="Sport name"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+            />
+            <input
+              type="text"
+              className = "input-box"
+              display="inline"
+              placeholder="Emoji"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+            <button
+              display="inline"
+              className="emoji-buttons"
+              onClick={handleAdd}>
+                Add to list
+            </button>
+            <button
+              display="inline"
+              className="emoji-buttons"
+              onClick={handleRemove}>
+                Remove from list
+            </button>
+          </div>
+        </div>
+        : <div /> }
+        </div>
+        <div className="separator"/>
+        <div className="DateComponent">
+          <div className="date-title">
+            <Clock size={20} color='rgb(37 99 235)'/>
+            <p className="date-range">Date Range</p>
+          </div>
+          <div className="empty">
+            <div className="date-pickers">
+              <div> 
+                <label className="date-label">Start Date</label>
+                <div className="date-box">
+                  <DateBox id="startDate" selectedDate={startDate} onDateChange={handleStartDateChange} />
+                </div>
+              </div>
+              <div>
+              <label className="date-label">End Date</label>
+              <div className="date-box">
+                <DateBox id="endDate" selectedDate={endDate} onDateChange={handleEndDateChange} />
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="separator"/>
+        <div className="UploadComponent">
+          <div className="upload-title">
+            <Upload size={20} color='rgb(37 99 235)'/>
+            <p className="file-upload-title">Upload ICS or RSS File</p>
+          </div>
+          <div>
+            <label htmlFor="files" className="file-label">
+              <Upload className="icon" size={18}/>
+              Select ICS or RSS file(s)
+            </label>
+            <br/>
+            <input id="files" type="file" className="file-input" accept=".ics,.rss" onChange={handleFileChange} multiple/>
+          </div>
+          <div>
+            {uploadedFiles.length === 0 ? (
+              <div className="empty"/>
+            ) : (
+              <div className="uploaded-files">
+                <p className="UploadedFilesTitle">Uploaded files:</p>
+                <ul>
+                {
+                  uploadedFiles.map((file, index) => (
+                    <li key={index}>
+                      {file.name}
+                      <button className="remove-button" onClick={() => handleRemoveFile(file.name)}>Remove</button>
+                    </li>
+                  ))
+                }
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="separator"/>
+        <div className="CalendarComponent">
+          <button className='generate-button' onClick={handleButtonClick}>Generate Calendar!</button>
+        </div>
+        </div>
+    <div className="content">
       <div className="calendar">
-        {divText}
+        {divText && (
+          <div className="editor-wrapper">
+            <h3>Edit Calendar:</h3>
+            <Tiptap ref={tiptapRef} />
+            {divText && (
+              <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                <button 
+                  className="generate-button" 
+                  onClick={handleCopyToClipboard}
+                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Copy className="icon" size={18}/>
+                  Copy Calendar to Clipboard
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
+    </main>
+  </div>
   );
 }
 
