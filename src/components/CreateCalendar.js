@@ -16,19 +16,60 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
     }
   }
 
-  // Extract links from description
-  function extractLinks(description) {
-    let links = [];
+  const extractLinks = (description, url) => {
+    if (!description) return [];
     
-    // Simple regex to find HTML links
-    const linkRegex = /<a[^>]*href=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi;
+    const links = [];
+    
+    // Extract HTML links from description
     let match;
-    
+ 
+    // Add links if found
+    const linkRegex = /(?:Video|Audio|Tickets):\s*(https?:\/\/[^\s][^\s\\]+)/g;
     while ((match = linkRegex.exec(description)) !== null) {
-      links.push({
-        url: match[1],
-        text: match[2].replace(/<[^>]*>/g, '') // Remove any nested HTML tags
-      });
+      const url = match[1];
+      if (!links.some(link => link.url === url)) {
+        let type = match[0]
+        if (type.includes('Audio'))
+        {
+          type = "Listen";
+        } else if (type.includes('Video')) {
+          type = "Watch";
+        }  else if (type.includes('Tickets')) {
+          type = "Buy Tickets";
+        }
+        if (url.includes('espn'))
+        {
+          links.push({
+            text: "ESPN",
+            url: url,
+          });
+        } else if (url.includes('playsight'))
+        {
+          links.push({
+            text: "Watch",
+            url: url,
+          });
+        } else if (url.includes('themw'))
+        {
+          links.push({
+            text: "Watch",
+            url: url,
+          });
+        } else if (url.includes('varsitynetwork'))
+        {
+          links.push({
+            text: "Listen",
+            url: url,
+          });
+        }
+        else {
+          links.push({
+            text: type,
+            url: url
+          })
+        };
+      }
     }
     
     return links;
@@ -76,25 +117,14 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
         const description = event.description || "";
         
         // Extract links from description
-        const links = extractLinks(description);
+        const links = extractLinks(description, event.url);
         let linkSection = "";
         
-        // Add relevant links at the end of the event description
+        // Add all links at the end of the event description
         if (links.length > 0) {
-          // Group links by type
-          const relevantLinks = links.filter(link => {
-            const text = link.text.trim().toUpperCase();
-            return ["SEATGEEK", "ESPN", "SEC", "TICKETS", "STATS", "LIVE STATS", "TOURNAMENT"].some(
-              keyword => text.includes(keyword)
-            );
-          });
-          
-          if (relevantLinks.length > 0) {
-            // Format as HTML links
-            linkSection = " | " + relevantLinks.map(link => 
-              `<a href="${link.url}" target="_blank">${link.text.trim()}</a>`
-            ).join(" | ");
-          }
+          linkSection = "\n| " + links.map(link => 
+            `<a href="${link.url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;"><b>${link.text}</b></a>`
+          ).join(" | ");
         }
         
         // Simplified event description without formatting
@@ -128,31 +158,38 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
       const endDate = new Date(item.getElementsByTagName("ev:enddate")[0].textContent);
       const location = item.getElementsByTagName("ev:location")[0]?.textContent || "";
       const description = item.getElementsByTagName("description")[0]?.textContent || "";
+      const liveStats = item.getElementsByTagName("s:livestats")[0]?.textContent || "";
+      const boxScore = item.getElementsByTagName("s:boxscore")[0]?.textContent || "";
+      const recap = item.getElementsByTagName("s:recap")[0]?.textContent || "";
 
       if (compareDate(day, startDate, endDate)) {
         const emoji = getEmoji(title) || "";
         const time = startDate ? Moment(startDate).format('h:mm A') : "";
         
         // Extract links from description
-        const links = extractLinks(description);
+        const links = extractLinks(description, item.getElementsByTagName("s:links")[0]?.textContent);
         let linkSection = "";
+
+        if (liveStats) {
+          linkSection += " | " +
+            `<a href="${liveStats}" target="${liveStats}" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;"><b>Live Stats</b></a>`
+        }
+
+        if (boxScore) {
+          linkSection += " | " +
+            `<a href="${boxScore}" target="${boxScore}" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;"><b>Box Score</b></a>`
+        }
+
+        if (recap) {
+          linkSection += " | " +
+            `<a href="${recap}" target="${recap}" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;"><b>Recap</b></a>`
+        }
         
-        // Add relevant links at the end of the event description
+        // Add all links at the end of the event description
         if (links.length > 0) {
-          // Group links by type
-          const relevantLinks = links.filter(link => {
-            const text = link.text.trim().toUpperCase();
-            return ["SEATGEEK", "ESPN", "SEC", "TICKETS", "STATS", "LIVE STATS", "TOURNAMENT"].some(
-              keyword => text.includes(keyword)
-            );
-          });
-          
-          if (relevantLinks.length > 0) {
-            // Format as HTML links
-            linkSection = " | " + relevantLinks.map(link => 
-              `<a href="${link.url}" target="_blank">${link.text.trim()}</a>`
-            ).join(" | ");
-          }
+          linkSection = "\n| " + links.map(link => 
+            `<a href="${link.url}" target="${link.url}" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;"><b>${link.text}</b></a>`
+          ).join(" | ");
         }
         
         let eventDescription = `${emoji} ${title}`;
@@ -187,7 +224,7 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
     }
     
     if (allEvents.length === 0) {
-      return <p key="no-events" style={{ fontStyle: "italic", fontWeight: "normal", margin: "0" }}>No Events Scheduled</p>;
+      return <p key="no-events" style={{ fontStyle: "italic", fontWeight: "normal", margin: "0" }}><i>No Events Scheduled</i></p>;
     }
     
     // Sort events by time
@@ -226,7 +263,7 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
       const eventsForDay = generateCal(jsDate, files);
       
       // Generate day header formatted as bold and underlined
-      const dayHeader = `<b><u>${dayStr}, ${monthStr} ${dateNum}</u></b>`;
+      const dayHeader = `<b><i><u>${dayStr}, ${monthStr} ${dateNum}</u></i></b>`;
       
       // If there are no events, show "No Events Scheduled" message
       let combinedContent;
@@ -235,7 +272,7 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
         combinedContent = `${dayHeader}<br />${eventsForDay.props.dangerouslySetInnerHTML.__html}`;
       } else {
         // No events scheduled
-        combinedContent = `${dayHeader}<br />No Events Scheduled`;
+        combinedContent = `${dayHeader}<br /><i>No Events Scheduled</i>`;
       }
       
       events.push(
@@ -256,6 +293,19 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
 
   return (
     <div style={{ lineHeight: "1.3" }}>
+      <style>
+        {`
+          .event-link {
+            color: #0066cc;
+            cursor: pointer;
+            margin-right: 8px;
+
+          }
+          .event-link:hover {
+            color: #004499;
+          }
+        `}
+      </style>
       {generateCalendar(files)}
     </div>
   );

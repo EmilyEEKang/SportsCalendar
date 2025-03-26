@@ -273,19 +273,18 @@ function App() {
     }
   }
 
-  // Add function to copy editor content to clipboard
-  const handleCopyToClipboard = () => {
+const handleCopyToClipboard = () => {
     if (tiptapRef.current) {
       const htmlContent = tiptapRef.current.getHTML();
       
       try {
         // Process HTML to preserve only day headers formatting
-        const processedHtml = processHtmlForCopy(htmlContent);
+        const processedHtml = htmlContent;
         
         // Use ClipboardItem to preserve minimal formatting
         const clipboardItem = new ClipboardItem({
           'text/html': new Blob([processedHtml], { type: 'text/html' }),
-          'text/plain': new Blob([stripHtml(processedHtml)], { type: 'text/plain' }) // Fallback plain text
+          'text/plain': new Blob([processedHtml], { type: 'text/plain' }) // Fallback plain text
         });
         
         navigator.clipboard.write([clipboardItem])
@@ -303,103 +302,11 @@ function App() {
           .catch(err => {
             console.error('Failed to copy formatted text: ', err);
             // Fallback to plain text copy
-            fallbackCopyText(processedHtml);
           });
       } catch (err) {
         console.error('ClipboardItem not supported: ', err);
-        // Fallback to plain text copy
-        fallbackCopyText(htmlContent);
       }
     }
-  };
-  
-  // Process HTML to preserve only day headers formatting
-  const processHtmlForCopy = (html) => {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    
-    // Find all day content paragraphs
-    const dayContentParagraphs = tempDiv.querySelectorAll('.day-content');
-    
-    // Process each day's content
-    dayContentParagraphs.forEach(paragraph => {
-      // Make sure parent div has proper spacing
-      const parentDiv = paragraph.closest('.calendar-day');
-      if (parentDiv) {
-        parentDiv.style.marginBottom = '20px';
-      }
-      
-      // Preserve the header formatting and ensure line breaks work properly
-      const content = paragraph.innerHTML;
-      
-      // Get all the anchor tags to preserve them
-      const anchorTags = [];
-      const anchorRegex = /<a\s+(?:[^>]*?\s+)?href=(["'])(.*?)\1[^>]*>(.*?)<\/a>/gi;
-      let match;
-      let processedContent = content;
-      
-      // Find all anchor tags and replace them with placeholders
-      let i = 0;
-      while ((match = anchorRegex.exec(content)) !== null) {
-        const placeholder = `__LINK_${i}__`;
-        anchorTags.push({
-          placeholder: placeholder,
-          original: match[0]
-        });
-        
-        // Replace the link with a placeholder in processed content
-        processedContent = processedContent.replace(match[0], placeholder);
-        i++;
-      }
-      
-      // Apply other formatting rules (keep header bold/underlined, preserve line breaks)
-      processedContent = processedContent
-        // Keep header formatting
-        .replace(/<b><u>(.*?)<\/u><\/b><br\s*\/>/, function(match, headerText) {
-          return `<b><u>${headerText}</u></b><br />`;
-        })
-        // Remove any other formatting but preserve <br /> tags - excluding our placeholders
-        .replace(/<(?!b>|\/b>|u>|\/u>|\/?br\s*\/?)([^>]*)>/gi, '');
-      
-      // Replace the placeholders with the original anchor tags
-      anchorTags.forEach(tag => {
-        processedContent = processedContent.replace(tag.placeholder, tag.original);
-      });
-      
-      paragraph.innerHTML = processedContent;
-    });
-    
-    return tempDiv.innerHTML;
-  };
-  
-  // Strip all HTML for plain text version
-  const stripHtml = (html) => {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    return tempDiv.textContent || tempDiv.innerText || '';
-  };
-  
-  // Fallback function for browsers that don't support ClipboardItem
-  const fallbackCopyText = (htmlContent) => {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-    
-    // Get the text content, preserving line breaks
-    const textContent = tempDiv.innerText;
-    
-    navigator.clipboard.writeText(textContent)
-      .then(() => {
-        setCopySuccess(true);
-        setAlertMessage('Calendar copied to clipboard (plain text only)');
-        setSeverity('info');
-        setAlertOpen(true);
-      })
-      .catch(err => {
-        console.error('Failed to copy text: ', err);
-        setAlertMessage('Failed to copy to clipboard');
-        setSeverity('error');
-        setAlertOpen(true);
-      });
   };
 
   return (

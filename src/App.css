@@ -271,7 +271,6 @@ button {
 
 .editor-wrapper {
   margin-top: 40px;
-  border-top: 2px solid #e5e7eb;
   padding-top: 20px;
 }
 
@@ -313,4 +312,8 @@ button {
   display: block;
   content: "";
   margin-top: 0.5em;
+}
+
+a {
+  color: rgb(37, 99, 235);
 }
