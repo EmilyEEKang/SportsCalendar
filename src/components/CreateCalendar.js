@@ -263,7 +263,7 @@ const CreateCalendar = ({ startDate, endDate, files, emojiDictionary }) => {
       const eventsForDay = generateCal(jsDate, files);
       
       // Generate day header formatted as bold and underlined
-      const dayHeader = `<b><i><u>${dayStr}, ${monthStr} ${dateNum}</u></i></b>`;
+      const dayHeader = `<b><u>${dayStr}, ${monthStr} ${dateNum}</u></b>`;
       
       // If there are no events, show "No Events Scheduled" message
       let combinedContent;
